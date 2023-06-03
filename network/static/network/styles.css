@@ -1,0 +1,53 @@
+* {
+    box-sizing: border-box;
+}
+html {
+    font-family: Verdana, sans-serif;
+}
+fieldset {
+    border: 4px solid rgb(224, 223, 223);
+    border-radius: 10px;
+    margin: 20px;
+}
+fieldset:hover {
+    border: 4px solid rgb(231, 229, 229);
+    border-radius: 10px;
+    margin: 20px;
+    background-color: rgba(246, 246, 246, 0.702);
+}
+fieldset div {
+    border: none;
+    margin: 20px;
+}
+form textarea {
+    border: 3px solid rgb(232, 232, 232);
+    border-radius: 10px;
+    width: 100%;
+    outline: none;
+}
+form textarea:focus {
+    border: 3px solid rgb(221, 221, 221);
+    border-radius: 10px;
+    width: 100%;
+    outline: none;
+}
+.formButton {
+    border-radius: 10px;
+}
+.formButton:hover {
+    background-color:rgb(255, 255, 255) ;
+}
+.post {
+    border: solid #777777;
+}
+.post-header {
+    display: flex;
+    background-color: red;
+    border: solid green;
+}
+.post-header > p {
+    width: auto;
+}
+.post-section {
+    margin: 22px;
+}

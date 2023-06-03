@@ -1,0 +1,84 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+
+<script type="text/babel">
+
+    // Final App for Rendering page
+    function App() {
+        
+        const[allPosts, setAllPosts] = React.useState({})
+        
+        // show or hide (all/profile/following) all posts
+        const[show, setShow] = React.useState("all-posts")
+        
+        let tmpList = []
+        
+
+        React.useEffect(() => {
+            // update displaced data using fetch
+            fetch("posts")
+            .then(res => res.json())
+            .then(data => setAllPosts(data))
+
+            // listening for clicks, assign button id to 'show'
+            document.addEventListener("click", function(event) {
+                document.getElementById(event.target)
+                console.log(event.target.id);
+                if(event.target.id === "profile" || event.target.id === "following") {
+                    setShow(event.target.id)
+                } else {
+                    setShow("all-posts")
+                }
+
+            });
+        }, [])
+        
+
+        // components for different pages
+        const everyPost = Object.entries(allPosts).map(element => {
+            return (
+                <div className="post">
+                    <div className="post-header">
+                        <p>{element[1].user}</p>
+                        <p>{element[1].timestamp}</p>
+                    </div>
+                    <div className="post-content">
+                        <p>{element[1].content}</p>
+                    </div>
+                    <div className="post-likes">
+                        <p>Likes {element[1].likes}</p>
+                    </div>
+                </div>
+            )
+        })
+
+        const profile = <h3>Profile</h3>
+
+        const following = <h3>Following</h3>
+
+                
+        // show only all/profile/following posts
+        let showPosts
+        if(show === "all-posts") {
+            showPosts = everyPost
+        } else if(show ==="profile") {
+            showPosts = profile
+        } else if(show ==="following") {
+            showPosts = following
+        }
+        
+        return (
+            <div className="every-post">
+                <section className="post-section">
+                    {showPosts}
+                </section>
+            </div>
+            
+        )
+    };
+    ReactDOM.render(<App />, document.querySelector("#root-allposts"))
+
+</script>
+
+{% endblock %}
