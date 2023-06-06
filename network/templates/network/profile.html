@@ -2,19 +2,16 @@
 
 {% block body %}
 
-<script type="text/babel">
 
-    function App() {
+    <div className="every-post">
+        <h1>Profile</h1>
+        <h2>{{ user }}</h2>
+        <p>You have {{followers}} followers!</p>
+        <p>You are following {{following}} people!</p>
+        {% for post in posts %} 
+            <p>{{post.add_post}}</p>
+        {% endfor %} 
+    </div>
 
-        return (
-            <div>
-                <h1>Profile</h1>
-            </div>
-        )
-    }
-
-    ReactDOM.render(<App />, document.querySelector("#root-profile"))
-
-</script>
 
 {% endblock %}

@@ -11,11 +11,8 @@
         const[userPosts, setUserPosts] = React.useState()
         const[followCount, setFollowCount] = React.useState()
         const[followList, setFollowList] = React.useState()
-        const[followButton, setFollowButton] = React.useState("Follow")
+        const[followButton, setFollowButton] = React.useState()
         const[profile, setProfile] = React.useState()
-        const[currentUser, setCurrentUser] = React.useState("benhillier")
-        const[pushingButton, setPushingButton] = React.useState(false)
-        const[allFollowPosts, setAllFollowPosts] = React.useState()
 
 
         //useEffect Counters
@@ -130,27 +127,23 @@
             )
         };
 
-        React.useEffect(() => {
+        function UserProfile() {
 
-            fetch(`follow/${currentUser}`, {
+            const followers = profile[0]
+            const following = profile[1]
+            const current_user = profile[3]
+
+            
+            fetch("follow_true", {
                 method: "POST",
                 body: JSON.stringify({
-                follow_list: followButton,
-                pushed_button: pushingButton
+                current_user: current_user,
+                follow_list: followList
                 })
             })
             .then(res => res.json())
             .then(data => setFollowButton(data))
-
-            setPushingButton(false)
-
-        }, [UserProfile])
-
-        function UserProfile() {
-            const followers = profile[0]
-            const following = profile[1]
-            setCurrentUser(profile[3])
-
+            console.log(followButton)
             
             
             // update Follow button, and change fetch put follow
@@ -158,14 +151,21 @@
             
                 // checking if user is following or not, then set followButton
                 function handleFollowButton() {
+                    fetch(`follow/${current_user}`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            following: followButton 
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => setFollowButton(data))
+
                     setFollowButton(followButton === "Follow" ? "Unfollow" : "Follow")
-                    setPushingButton(true)
-                    setCounty(county + 1)
                 }
 
                  
                 function Button() {
-                    if(currentUser == profile[4]) {
+                    if(current_user == profile[4]) {
                         return <div />
                     } else {
                         return (
@@ -209,33 +209,12 @@
             )
         };
 
-
-        
-        React.useEffect(() => {
-            fetch("follow_posts")
-            .then(res => res.json())
-            .then(data => setAllFollowPosts(data))
-        }, [show]);
-        
         function Following() {
-
-            const followPost = Object.entries(allFollowPosts).map(element => {
-                return (
-                    <div className="post">
-                        <div className="post-header">
-                            <p><a onClick={() => loadProfile(element[1].user)}>{element[1].user}</a></p>
-                            <p>{element[1].timestamp}</p>
-                        </div>
-                        <div className="post-content">
-                            <p>{element[1].content}</p>
-                        </div>
-                        <div className="post-likes">
-                            <p>Likes {element[1].likes}</p>
-                        </div>
-                    </div>
-                )
-            })
-            return followPost
+            return (
+                <div>
+                    <h3>Following</h3>
+                </div>
+            )
         };
 
 
