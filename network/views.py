@@ -5,9 +5,6 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from django.db.models import Q
-from itertools import chain
-
 
 # from django.contrib.auth.models import User
 # from django.contrib.auth import authenticate
@@ -196,7 +193,7 @@ def follow(request, current_user):
     follower_id = User.objects.get(username=follow_user).id
     pushed_button = (data["pushed_button"])
 
-    try:
+    try: 
         tmp = Follow.objects.get(user=user_id, follows=follower_id)
         status = "Unfollow"
     except:
@@ -235,10 +232,7 @@ def follow_posts(request):
     followed_user_posts = []
     for user in user_follow_list:
         followed_user_posts.append(User.objects.get(username=user["follower"]).id)
-
-    # get posts where id=multiple users
-    # print(AddPost.objects.filter(Q(id=1) | Q(id=2) | Q(id=3) | Q(id=4)))
-
+    
     each_user_posts = []
     for postie in followed_user_posts:
         each_user_posts.append(AddPost.objects.filter(username=postie))
@@ -247,18 +241,24 @@ def follow_posts(request):
     for each_post in each_user_posts:
         posts.append(each_post.order_by("-timestamp").all())
 
+
     data = []
     for post in posts:
-        likes = Like.objects.filter(post=post[0])
-        data.append({
-            "id": post[0].id,
-            "user": post[0].username.username,
-            "content": post[0].add_post,
-            "timestamp": post[0].timestamp.strftime("%a, %d %b %Y %H:%M:%S"),
-            "likes": likes.count()
-        })
+        for pot in post:
+            likes = Like.objects.filter(post=post[0])
+            data.append({
+                "id": post[0].id,
+                "user": post[0].username.username,
+                "content": post[0].add_post,
+                "timestamp": post[0].timestamp.strftime("%a, %d %b %Y %H:%M:%S"),
+                "likes": likes.count()
+            })
+    
+    
+    data_sorted = sorted(data, key=lambda x: x['timestamp'], reverse=True)
 
-    return JsonResponse(data, safe=False)
+
+    return JsonResponse(data_sorted, safe=False)
 
 
 
