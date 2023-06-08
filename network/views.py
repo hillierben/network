@@ -262,5 +262,11 @@ def follow_posts(request):
 
 
 
+######### TEST VIEW FOR PAGINATOR #############
+
+def testpaginator(request):
+    return render(request, "network/testpaginator.html")
 
 
+def test_paginate(request):
+    ...

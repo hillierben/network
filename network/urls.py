@@ -18,4 +18,9 @@ urlpatterns = [
     path("profile/<str:username>", views.profile, name="profile"),
     path("follow/<str:current_user>", views.follow, name="follow"),
     path("follow_posts", views.follow_posts, name="follow_posts"),
+
+    #TEST PAGE
+    path("testpaginator", views.testpaginator, name="testpaginator"),
+    #TEST API
+    path("test_paginate", views.test_paginate, name="test_paginate"),
 ]
