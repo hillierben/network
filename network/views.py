@@ -80,7 +80,6 @@ def add_post(request):
 
 def update_post(request, id, content):
     if request.method == "POST":
-        print(content)
         update = AddPost.objects.get(pk=id)
         update.add_post = content
         update.save(update_fields=['add_post'])
@@ -103,10 +102,6 @@ def all_posts(request, page):
             like_button = "liked"
         except:
             like_button = "unliked"
-        # print(User.objects.get(username=post.username.username))
-        # print(AddPost.objects.get(id=post.id))
-        # print(User.objects.get(username=request.user))
-
 
         data.append({
             "id": post.id,
@@ -288,13 +283,22 @@ def follow_posts(request, page):
     data = []
     for post in posts:
         for pot in post:
-            likes = Like.objects.filter(post=post[0])
+            likes = Like.objects.filter(post=pot)
+            try:
+                tmp = Like.objects.get(user=User.objects.get(username=pot.username.username), post=AddPost.objects.get(id=pot.id), logged_in_user=User.objects.get(username=request.user))
+                like_button = "liked"
+                print("liked")
+            except:
+                like_button = "unliked"
+                print("unliked")
+
             data.append({
-                "id": post[0].id,
-                "user": post[0].username.username,
-                "content": post[0].add_post,
-                "timestamp": post[0].timestamp.strftime("%a, %d %b %Y %H:%M:%S"),
-                "likes": likes.count()
+                "id": pot.id,
+                "user": pot.username.username,
+                "content": pot.add_post,
+                "timestamp": pot.timestamp.strftime("%a, %d %b %Y %H:%M:%S"),
+                "likes": likes.count(),
+                "like_button": like_button
             })
 
     paginator = Paginator(data, 10)

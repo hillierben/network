@@ -85,7 +85,7 @@
             fetch(`follow_list`)
             .then(response => response.json())
             .then(data => setFollowList(data))
-        }, []);
+        }, [likeButton]);
         
         
         // load users' profile page
@@ -99,7 +99,6 @@
         }
 
         React.useEffect(() => {
-            editingPost === true ? console.log("true dat") : console.log("Falso balso")
             if(editingPost === false && postId) {
                 
                 fetch(`update_post/${postId}/${newUpdatedContent}`, {
@@ -131,9 +130,6 @@
 
         // Set Like Status
         React.useEffect(() => {
-            console.log(likeDetails[0])
-            console.log(likeDetails[1])
-            console.log("Like Button Pushed")
             fetch(`like/${likeDetails[0]}/${likeDetails[1]}`, {
                 method: "POST",
                 body: JSON.stringify({
@@ -161,7 +157,6 @@
 
             function handleLikeButton(likeUser, likeId) {
                 setLikeDetails([likeUser, likeId])
-                console.log(likeDetails)
                 setLikeButton(likeButton === "Like" ? "Unlike" : "Like")
             }
             
@@ -438,6 +433,17 @@
         function Following() {
 
             const followPost = Object.entries(allFollowPosts).map(element => {
+                function handleLikeButton(likeUser, likeId) {
+                    setLikeDetails([likeUser, likeId])
+                    setLikeButton(likeButton === "Like" ? "Unlike" : "Like")
+                }
+                let likeButtonText
+                if(element[1].like_button === "unliked") {
+                    likeButtonText = "Like"
+                } else {
+                    likeButtonText = "Unlike"
+                }
+
                 return (
                     <div className="post">
                         <div className="post-header">
@@ -449,6 +455,9 @@
                         </div>
                         <div className="post-likes">
                             <p>Likes {element[1].likes}</p>
+                        </div>
+                        <div>
+                            <button onClick={() => handleLikeButton(element[1].user, element[1].id)}>{likeButtonText}</button>
                         </div>
                     </div>
                 )
