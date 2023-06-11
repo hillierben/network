@@ -11,11 +11,26 @@
         const[userPosts, setUserPosts] = React.useState()
         const[followCount, setFollowCount] = React.useState()
         const[followList, setFollowList] = React.useState()
-        const[followButton, setFollowButton] = React.useState("Follow")
+        const[followButton, setFollowButton] = React.useState()
         const[profile, setProfile] = React.useState()
         const[currentUser, setCurrentUser] = React.useState("benhillier")
         const[pushingButton, setPushingButton] = React.useState(false)
         const[allFollowPosts, setAllFollowPosts] = React.useState()
+        const[userCounter, setUserCounter] = React.useState(1)
+        const[editingPost, setEditingPost] = React.useState(false)
+        const[postId, setPostId] = React.useState()
+        const[postContent, setPostContent] = React.useState()
+        const[newUpdatedContent, setNewUpdatedContent] = React.useState()
+        let updatedContent
+        const[refreshPosts, setRefreshPosts] = React.useState(false)
+        const[likeButton, setLikeButton] = React.useState()
+        const[likeDetails, setLikeDetails] = React.useState([])
+
+        const[allPostsPage, setAllPostsPage] = React.useState(1)
+        const[profilePostsPage, setProfilePostsPage] = React.useState(1)
+        const[userProfilePage, setUserProfilePage] = React.useState(1)
+        const[theirProfilePage, setTheirProfilePage] = React.useState(1)
+        const[followPage, setFollowPage] = React.useState(1)
 
 
         //useEffect Counters
@@ -24,39 +39,111 @@
         // show or hide (all/profile/following) all posts
         const[show, setShow] = React.useState("all-posts")
 
+        // Get CSRF Token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+        
         React.useEffect(() => {
-            fetch("posts")
+            fetch(`posts/${allPostsPage}`)
             .then(res => res.json())
-            .then(data => setAllPosts(data))
+            .then(data => setAllPosts(data))        
+        }, [allPostsPage]);
 
-            fetch(`profile/benhillier`)
-                .then(res => res.json())
-                .then(data => setProfile(data))
-
-            fetch("follow_list")
-            .then(response => response.json())
-            .then(data => setFollowList(data))
-            
-        }, []);
-
-
-        // load users' profile page
-        function loadProfile(username) {
-
-            // setProfile(async() => {
-            //     const res = await fetch(`profile/${username}`)
-            //     const data = await res.json()
-            //     return data
-            // })
-
-            fetch(`profile/${username}`)
+        React.useEffect(() => {
+            fetch(`posts/${allPostsPage}`)
+            .then(res => res.json())
+            .then(data => setAllPosts(data))        
+        }, [refreshPosts, likeButton]);
+        
+        React.useEffect(() => {
+            fetch(`profile/benhillier/${profilePostsPage}`)
             .then(res => res.json())
             .then(data => setProfile(data))
+        }, []);
 
+        React.useEffect(() => {
+            fetch(`profile/benhillier/${profilePostsPage}`)
+            .then(res => res.json())
+            .then(data => setProfile(data))
+        }, [refreshPosts]);
+        
+        React.useEffect(() => {
+            fetch(`follow_list`)
+            .then(response => response.json())
+            .then(data => setFollowList(data))
+        }, []);
+        
+        
+        // load users' profile page
+        function loadProfile(username) {
+            
+            fetch(`profile/${username}/${profilePostsPage}`)
+            .then(res => res.json())
+            .then(data => setProfile(data))
+            
             setShow("userProfile")
         }
-        
 
+        React.useEffect(() => {
+            editingPost === true ? console.log("true dat") : console.log("Falso balso")
+            if(editingPost === false && postId) {
+                
+                fetch(`update_post/${postId}/${newUpdatedContent}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                        },
+                    body: JSON.stringify({
+                        'updated_content': newUpdatedContent,
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                setRefreshPosts(refreshPosts === false ? true : false)
+                });
+            }
+        },  [editingPost])
+        
+        
+        function editPost(id, content) {
+            setNewUpdatedContent(updatedContent)
+            setPostId(id)
+            editingPost === false ? setEditingPost(true) : setEditingPost(false)
+        }
+
+        function newContent(newContent) {
+            updatedContent = newContent
+        }
+
+        // Set Like Status
+        React.useEffect(() => {
+            console.log(likeDetails[0])
+            console.log(likeDetails[1])
+            console.log("Like Button Pushed")
+            fetch(`like/${likeDetails[0]}/${likeDetails[1]}`, {
+                method: "POST",
+                body: JSON.stringify({
+                })
+            })
+            .then(res => res.json())
+            .then(data => console.log(data))
+
+        }, [likeButton])
+        
         // components for different pages
         function EveryPost() {
 
@@ -71,24 +158,80 @@
                     setShow("all-posts")
                 }
             })
+
+            function handleLikeButton(likeUser, likeId) {
+                setLikeDetails([likeUser, likeId])
+                console.log(likeDetails)
+                setLikeButton(likeButton === "Like" ? "Unlike" : "Like")
+            }
             
             const everyPost = Object.entries(allPosts).map(element => {
+                const postContent = <p>{element[1].content}</p>
+                const editingPostContent = (
+                    <div>
+                        <textarea onChange={e => newContent(e.target.value)} placeholder={element[1].content} autofocus>{element[1].content}</textarea>
+                    </div>
+                )
+                
+                let displayPostContent
+                let editText
+                if(element[1].user === element[1].currentUser && editingPost === true && element[1].id === postId) {
+                    displayPostContent =  editingPostContent
+                    editText = "Save"
+                } else {
+                    displayPostContent = postContent 
+                    editText = "Edit"
+                }
+                const editButton = element[1].user === element[1].currentUser && <button onClick={() => editPost(element[1].id, element[1].content)}>{editText}</button>
+
+                let likeButtonText
+                if(element[1].like_button === "unliked") {
+                    likeButtonText = "Like"
+                } else {
+                    likeButtonText = "Unlike"
+                }
+                
                 return (
                     <div className="post">
                         <div className="post-header">
-                            <p><a onClick={() => loadProfile(element[1].user)}>{element[1].user}</a></p>
-                            <p>{element[1].timestamp}</p>
+                            <span className="post-header-span"><p><a onClick={() => loadProfile(element[1].user)}>{element[1].user}</a></p>
+                            {editButton}</span>
+                            <span><p>{element[1].timestamp}</p></span>
                         </div>
                         <div className="post-content">
-                            <p>{element[1].content}</p>
+                            {displayPostContent}
                         </div>
                         <div className="post-likes">
-                            <p>Likes {element[1].likes}</p>
+                            <p>Likes {element[1].likes}</p>                            
+                        </div>
+                        <div>
+                            <button onClick={() => handleLikeButton(element[1].user, element[1].id)}>{likeButtonText}</button>
                         </div>
                     </div>
                 )
             })
-            return everyPost
+
+            function setButton(event) {
+                if(event.target.id === "back") {
+                    setAllPostsPage(allPostsPage - 1)
+                } else if(event.target.id === "next") {
+                    setAllPostsPage(allPostsPage + 1) 
+                }
+            }
+
+            const button = (
+                <div>
+                    <button onClick={setButton} id="back">Back</button>
+                    <button onClick={setButton} id="next">Next</button>
+                </div>
+            )
+            
+            return (
+                <div>
+                    {button}
+                    {everyPost}
+                </div>
+            )
         };
 
         React.useEffect(() => {
@@ -96,23 +239,42 @@
             .then(response => response.json())
             .then(data => setFollowCount(data))
 
-            fetch("user_posts")
+            fetch(`user_posts/${profilePostsPage}`)
             .then(res => res.json())
             .then(data => setUserPosts(data))
 
-        }, [])
+        }, [profilePostsPage, refreshPosts])
 
         function Profile() {
-
             const postUser = Object.entries(userPosts).map(upost => {
+                const postContent = <p>{upost[1].content}</p>
+                const editingPostContent = (
+                    <div>
+                        <textarea onChange={e => newContent(e.target.value)} placeholder={upost[1].content}>{upost[1].content}</textarea>
+                    </div>
+                )
+                
+                let displayPostContent
+                let editText
+                if(upost[1].user === upost[1].currentUser && editingPost === true && upost[1].id === postId) {
+                    displayPostContent =  editingPostContent
+                    editText = "Save"
+                } else {
+                    displayPostContent = postContent 
+                    editText = "Edit"
+                }
+                const editButton = upost[1].user === upost[1].currentUser && 
+                    <button onClick={() => editPost(upost[1].id)}>{editText}</button>
+
                 return (
                     <div className="post">
                         <div className="post-header">
-                            <p>{upost[1].user}</p>
+                            <span className="post-header-span"><p>{upost[1].user}</p>
+                            {editButton}</span>
                             <p>{upost[1].timestamp}</p>
                         </div>
                         <div className="post-content">
-                            <p>{upost[1].content}</p>
+                            {displayPostContent}
                         </div>
                         <div className="post-likes">
                             <p>Likes {upost[1].likes}</p>
@@ -121,10 +283,26 @@
                 )
             })
 
+            function setButton(event) {
+                if(event.target.id === "back") {
+                    setProfilePostsPage(profilePostsPage - 1)
+                } else if(event.target.id === "next") {
+                    setProfilePostsPage(profilePostsPage + 1) 
+                }
+            }
+
+            const button = (
+                <div>
+                    <button onClick={setButton} id="back">Back</button>
+                    <button onClick={setButton} id="next">Next</button>
+                </div>
+            )
+
             return (
                 <div>
                     <h4>You have {followCount.follower_count} followers!</h4>
                     <h4>You are following {followCount.following_count} people!</h4>
+                    {button}
                     {postUser}
                 </div>
             )
@@ -144,25 +322,30 @@
 
             setPushingButton(false)
 
-        }, [UserProfile])
+        }, [allFollowPosts, pushingButton])
 
+        React.useEffect(() => {
+            fetch(`profile/${currentUser}/${theirProfilePage}`)
+                .then(res => res.json())
+                .then(data => setProfile(data))
+            }, [theirProfilePage, followButton]);
+            
+
+
+        // User profile
         function UserProfile() {
             const followers = profile[0]
             const following = profile[1]
             setCurrentUser(profile[3])
-
-            
             
             // update Follow button, and change fetch put follow
             function FollowButton() {
-            
                 // checking if user is following or not, then set followButton
                 function handleFollowButton() {
                     setFollowButton(followButton === "Follow" ? "Unfollow" : "Follow")
                     setPushingButton(true)
                     setCounty(county + 1)
                 }
-
                  
                 function Button() {
                     if(currentUser == profile[4]) {
@@ -175,22 +358,59 @@
                         )
                     }
                 }
-                
-                return (
-                    <Button />
-                )
+
+                function setButton(event) {
+                if(event.target.id === "back") {
+                    setTheirProfilePage(theirProfilePage - 1)
+                } else if(event.target.id === "next") {
+                    setTheirProfilePage(theirProfilePage + 1) 
+                }
             }
 
+            const button = (
+                <div>
+                    <button onClick={setButton} id="back">Back</button>
+                    <button onClick={setButton} id="next">Next</button>
+                </div>
+            )
 
-            const profilePosts = Object.entries(profile[2]).map(element => {
+            return (
+                <div>
+                    {button}
+                    <Button />
+                </div>
+            )
+        }
+
+            const profilePosts = Object.entries(profile[2]).map(element => { 
+                const postContent = <p>{element[1].content}</p>
+                const editingPostContent = (
+                    <div>
+                        <textarea onChange={e => newContent(e.target.value)} placeholder={element[1].content}>{element[1].content}</textarea>
+                    </div>
+                )
+                
+                let displayPostContent
+                let editText
+                if(element[1].user === element[1].loggedInUser && editingPost === true && element[1].id === postId) {
+                    displayPostContent =  editingPostContent
+                    editText = "Save"
+                } else {
+                    displayPostContent = postContent 
+                    editText = "Edit"
+                }
+                const editButton = element[1].user === element[1].loggedInUser && 
+                    <button onClick={() => editPost(element[1].id)}>{editText}</button>
+
                 return (
                     <div className="post">
                         <div className="post-header">
-                            <p>{element[1].user}</p>
+                            <span className="post-header-span"><p>{element[1].user}</p>
+                            {editButton}</span>
                             <p>{element[1].timestamp}</p>
                         </div>
                         <div className="post-content">
-                            <p>{element[1].content}</p>
+                            {displayPostContent}
                         </div>
                         <div className="post-likes">
                             <p>Likes {element[1].likes}</p>
@@ -202,20 +422,18 @@
             return (
                 <div>
                     {`${followers} followers`}
-                    {`Following ${followers}`}
+                    {`Following ${following}`}
                     <FollowButton />
                     {profilePosts}
                 </div>
             )
         };
 
-
-        
         React.useEffect(() => {
-            fetch("follow_posts")
+            fetch(`follow_posts/${followPage}`)
             .then(res => res.json())
             .then(data => setAllFollowPosts(data))
-        }, [show]);
+        }, [followPage, followList, followButton]);
         
         function Following() {
 
@@ -235,7 +453,28 @@
                     </div>
                 )
             })
-            return followPost
+
+            function setButton(event) {
+                if(event.target.id === "back") {
+                    setFollowPage(followPage - 1)
+                } else if(event.target.id === "next") {
+                    setFollowPage(followPage + 1) 
+                }
+            }
+
+            const button = (
+                <div>
+                    <button onClick={setButton} id="back">Back</button>
+                    <button onClick={setButton} id="next">Next</button>
+                </div>
+            )
+
+            return (
+                <div>
+                    {button}
+                    {followPost}
+                </div>
+            )
         };
 
 

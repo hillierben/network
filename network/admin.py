@@ -12,7 +12,7 @@ class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "user", "follows"]
 
 class LikeAdmin(admin.ModelAdmin):
-    list_display = ["id", "user", "post"]
+    list_display = ["id", "user", "post", "logged_in_user"]
 
 class CommentAdmin(admin.ModelAdmin):
     list_display = ["id", "user", "post", "content", "created_at"]

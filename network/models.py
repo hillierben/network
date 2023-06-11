@@ -25,6 +25,7 @@ class AddPost(models.Model):
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_like")
     post = models.ForeignKey(AddPost, on_delete=models.CASCADE, related_name="post_post")
+    logged_in_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="logged_in_user")
 
     def __str__(self):
             return f"{self.user} {self.post}"

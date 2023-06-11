@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.core.paginator import Paginator
 
 # from django.contrib.auth.models import User
 # from django.contrib.auth import authenticate
@@ -77,23 +78,51 @@ def add_post(request):
     return HttpResponseRedirect(reverse("index"))
 
 
+def update_post(request, id, content):
+    if request.method == "POST":
+        print(content)
+        update = AddPost.objects.get(pk=id)
+        update.add_post = content
+        update.save(update_fields=['add_post'])
+    data = "Hello Bob"
+    return JsonResponse(data, safe=False)
+
+
 @csrf_exempt
-def all_posts(request):
+def all_posts(request, page):
     posts = AddPost.objects.all()
     posts = posts.order_by("-timestamp").all()
+    current_user = request.user
+
 
     data = []
     for post in posts:
         likes = Like.objects.filter(post=post)
+        try:
+            tmp = Like.objects.get(user=User.objects.get(username=post.username.username), post=AddPost.objects.get(id=post.id), logged_in_user=User.objects.get(username=request.user))
+            like_button = "liked"
+        except:
+            like_button = "unliked"
+        # print(User.objects.get(username=post.username.username))
+        # print(AddPost.objects.get(id=post.id))
+        # print(User.objects.get(username=request.user))
+
+
         data.append({
             "id": post.id,
             "user": post.username.username,
             "content": post.add_post,
             "timestamp": post.timestamp.strftime("%a, %d %b %Y %H:%M:%S"),
-            "likes": likes.count()
+            "likes": likes.count(),
+            "currentUser": str(current_user),
+            "like_button": like_button
         })
 
-    return JsonResponse(data, safe=False)
+    paginator = Paginator(data, 10)
+    # page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page)
+
+    return JsonResponse(page_obj.object_list, safe=False)
 
 
 def follow_count(request):
@@ -127,10 +156,11 @@ def follow_list(request):
     return JsonResponse(follow_list, safe=False)
 
 
-def user_posts(request):
+def user_posts(request, page):
     user = request.user.id
     posts = AddPost.objects.filter(username=user)
     posts = posts.order_by("-timestamp").all()
+    current_user = request.user
 
     data = []
     for post in posts:
@@ -140,13 +170,18 @@ def user_posts(request):
             "user": post.username.username,
             "content": post.add_post,
             "timestamp": post.timestamp.strftime("%a, %d %b %Y %H:%M:%S"),
-            "likes": likes.count()
+            "likes": likes.count(),
+            "currentUser": str(current_user)
         })
 
-    return JsonResponse(data, safe=False)
+    paginator = Paginator(data, 10)
+    # page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page)
+
+    return JsonResponse(page_obj.object_list, safe=False)
 
 
-def profile(request, username):
+def profile(request, username, page):
 
     # get user id from 'user'
     user = User.objects.filter(username=username)
@@ -162,6 +197,8 @@ def profile(request, username):
 
     name = request.user.username
 
+    logged_in_user = request.user
+
     data = []
     for post in posts:
         likes = Like.objects.filter(post=post)
@@ -170,13 +207,19 @@ def profile(request, username):
             "user": post.username.username,
             "content": post.add_post,
             "timestamp": post.timestamp.strftime("%a, %d %b %Y %H:%M:%S"),
-            "likes": likes.count()
+            "likes": likes.count(),
+            "loggedInUser": str(logged_in_user)
         })
+
+    paginator = Paginator(data, 3)
+    # page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page)
+
 
     all_data = [
         follower_count,
         following_count,
-        data,
+        page_obj.object_list,
         username,
         name
     ]
@@ -193,7 +236,7 @@ def follow(request, current_user):
     follower_id = User.objects.get(username=follow_user).id
     pushed_button = (data["pushed_button"])
 
-    try: 
+    try:
         tmp = Follow.objects.get(user=user_id, follows=follower_id)
         status = "Unfollow"
     except:
@@ -218,7 +261,7 @@ def follow(request, current_user):
     return JsonResponse(status, safe=False)
 
 
-def follow_posts(request):
+def follow_posts(request, page):
 
     # get all Following with current user.id
     user_current = request.user
@@ -232,7 +275,7 @@ def follow_posts(request):
     followed_user_posts = []
     for user in user_follow_list:
         followed_user_posts.append(User.objects.get(username=user["follower"]).id)
-    
+
     each_user_posts = []
     for postie in followed_user_posts:
         each_user_posts.append(AddPost.objects.filter(username=postie))
@@ -253,12 +296,43 @@ def follow_posts(request):
                 "timestamp": post[0].timestamp.strftime("%a, %d %b %Y %H:%M:%S"),
                 "likes": likes.count()
             })
-    
-    
-    data_sorted = sorted(data, key=lambda x: x['timestamp'], reverse=True)
+
+    paginator = Paginator(data, 10)
+    # page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page)
+
+    data_sorted = sorted(page_obj.object_list, key=lambda x: x['timestamp'], reverse=True)
 
 
     return JsonResponse(data_sorted, safe=False)
+
+@csrf_exempt
+def like(request, current_user, post_id):
+
+    user = User.objects.get(username=current_user).id
+    id = AddPost.objects.get(pk=post_id).id
+    logged_in_user = User.objects.get(username=request.user).id
+
+    try:
+        tmp = Like.objects.get(user=user, post=id, logged_in_user=logged_in_user)
+        add_like = False
+    except:
+        add_like = True
+
+    if add_like:
+        new_like = Like(
+            user=User.objects.get(username=current_user),
+            post = AddPost.objects.get(pk=post_id),
+            logged_in_user = User.objects.get(username=request.user)
+        )
+        new_like.save()
+    else:
+        delete_like = Like.objects.get(user=user, post=id, logged_in_user=logged_in_user)
+        delete_like.delete()
+
+    data = "like data"
+
+    return JsonResponse(data, safe=False)
 
 
 
@@ -268,5 +342,88 @@ def testpaginator(request):
     return render(request, "network/testpaginator.html")
 
 
-def test_paginate(request):
-    ...
+def test_paginate(request, page):
+    objects = [
+        {
+            "name": "bob",
+            "age": "1"
+        },
+        {
+            "name": "jim",
+            "age": "2"
+        },
+        {
+            "name": "greg",
+            "age": "3"
+        },
+        {
+            "name": "adam",
+            "age": "4"
+        },
+        {
+            "name": "jim",
+            "age": "5"
+        },
+        {
+            "name": "pete",
+            "age": "6"
+        },
+        {
+            "name": "henbo",
+            "age": "7"
+        },
+        {
+            "name": "flib",
+            "age": "8"
+        },
+        {
+            "name": "jim",
+            "age": "9"
+        },
+        {
+            "name": "unboe",
+            "age": "10"
+        },
+        {
+            "name": "shiulim",
+            "age": "11"
+        },
+        {
+            "name": "refkejnrv",
+            "age": "12"
+        },
+        {
+            "name": "ddkkfl",
+            "age": "13"
+        },
+        {
+            "name": "324f9uh",
+            "age": "14"
+        },
+        {
+            "name": "digiteihb",
+            "age": "15"
+        },
+        {
+            "name": "poplie",
+            "age": "16"
+        },
+        {
+            "name": "enbog",
+            "age": "17"
+        },
+        {
+            "name": "wert",
+            "age": "18"
+        },
+        {
+            "name": "volid",
+            "age": "19"
+        },
+    ]
+
+    paginator = Paginator(objects, 5)
+    # page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page)
+
+    return JsonResponse(page_obj.object_list, safe=False)

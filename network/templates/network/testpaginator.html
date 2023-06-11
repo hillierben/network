@@ -2,10 +2,60 @@
 
 {% block body %}
 
-<h1>Test Paginator</h1>
-
 <script type="text/babel">
 
+function Paginator() {
+    const[people, setPeople] = React.useState([])
+    const[loading, setLoading] = React.useState(false)
+    const[page, setPage] = React.useState(1)
+
+    React.useEffect(() => {
+        setLoading(true)
+        async function fetchy() {
+            await fetch(`test_paginate/${page}`)
+            .then(res => res.json())
+            .then(data => setPeople(data))
+        } 
+        fetchy()
+        setLoading(false)
+    }, [page])
+
+    console.log(page)
+    const allPeeps = people.map(person => {
+        return (
+            <ul>
+                <li>{person["name"]}</li>
+                <li>{person["age"]}</li>
+            </ul>
+        )
+    }) 
+
+    function setButton(event) {
+        if(event.target.id === "back") {
+            setPage(page - 1)
+        } else if(event.target.id === "next") {
+            setPage(page + 1) 
+        }
+    }
+
+    const button = (
+        <div>
+            <button onClick={setButton} id="back">Back</button>
+            <button onClick={setButton} id="next">Next</button>
+        </div>
+    )
+
+
+    return (
+        <div>
+            <h1>Test Paginator</h1>
+            {allPeeps}
+            {button}
+        </div>
+    )
+
+}
+ReactDOM.render(<Paginator />, document.querySelector("#root-paginator"))
 </script>
 
 {% endblock %}

@@ -63,6 +63,11 @@ form textarea:focus {
     padding-left: 5px;
     padding-right: 5px;
 }
+.post-header-span {
+    display: flex;
+    max-height: 30px;
+}
+
 .post-header > p {
     display: flex;
     width: auto;
