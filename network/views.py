@@ -81,9 +81,13 @@ def add_post(request):
 def update_post(request, id, content):
     if request.method == "POST":
         update = AddPost.objects.get(pk=id)
-        update.add_post = content
-        update.save(update_fields=['add_post'])
-    data = "Hello Bob"
+        if content == "undefined":
+            data = "Nothing changed"
+        else:
+            update.add_post = content
+            update.save(update_fields=['add_post'])
+            data = "Successful"
+        print(data)
     return JsonResponse(data, safe=False)
 
 
@@ -116,6 +120,8 @@ def all_posts(request, page):
     paginator = Paginator(data, 10)
     # page_number = request.GET.get("page")
     page_obj = paginator.get_page(page)
+
+    print(page_obj.has_next)
 
     return JsonResponse(page_obj.object_list, safe=False)
 
@@ -206,7 +212,7 @@ def profile(request, username, page):
             "loggedInUser": str(logged_in_user)
         })
 
-    paginator = Paginator(data, 3)
+    paginator = Paginator(data, 10)
     # page_number = request.GET.get("page")
     page_obj = paginator.get_page(page)
 

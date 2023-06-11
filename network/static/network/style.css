@@ -1,6 +1,10 @@
 * {
     box-sizing: border-box;
 }
+button {
+    border-radius: 10px;
+    background-color: aqua;
+}
 .every-post {
     margin: 22px;
 }

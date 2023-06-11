@@ -216,7 +216,7 @@
 
             const button = (
                 <div>
-                    <button onClick={setButton} id="back">Back</button>
+                    {allPostsPage > 1 && <button onClick={setButton} id="back">Back</button>}
                     <button onClick={setButton} id="next">Next</button>
                 </div>
             )
@@ -288,15 +288,15 @@
 
             const button = (
                 <div>
-                    <button onClick={setButton} id="back">Back</button>
+                    {profilePostsPage > 1 && <button onClick={setButton} id="back">Back</button>}
                     <button onClick={setButton} id="next">Next</button>
                 </div>
             )
 
             return (
-                <div>
-                    <h4>You have {followCount.follower_count} followers!</h4>
-                    <h4>You are following {followCount.following_count} people!</h4>
+                <div>                    
+                    <p>Followers: {followCount.follower_count}</p>
+                    <p>Following: {followCount.following_count}</p>
                     {button}
                     {postUser}
                 </div>
@@ -362,20 +362,20 @@
                 }
             }
 
-            const button = (
-                <div>
-                    <button onClick={setButton} id="back">Back</button>
-                    <button onClick={setButton} id="next">Next</button>
-                </div>
-            )
+                const button = (
+                    <div>
+                        {theirProfilePage > 1 && <button onClick={setButton} id="back">Back</button>}
+                        <button onClick={setButton} id="next">Next</button>
+                    </div>
+                )
 
-            return (
-                <div>
-                    {button}
-                    <Button />
-                </div>
-            )
-        }
+                return (
+                    <div>
+                        {button}
+                        <Button />
+                    </div>
+                )
+            }
 
             const profilePosts = Object.entries(profile[2]).map(element => { 
                 const postContent = <p>{element[1].content}</p>
@@ -416,8 +416,8 @@
 
             return (
                 <div>
-                    {`${followers} followers`}
-                    {`Following ${following}`}
+                    <p>{`Followers: ${followers}`}</p>
+                    <p>{`Following: ${following}`}</p>
                     <FollowButton />
                     {profilePosts}
                 </div>
@@ -473,7 +473,7 @@
 
             const button = (
                 <div>
-                    <button onClick={setButton} id="back">Back</button>
+                    {followPage > 1 && <button onClick={setButton} id="back">Back</button>}
                     <button onClick={setButton} id="next">Next</button>
                 </div>
             )
